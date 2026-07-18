@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wild Rift 出裝符文比較</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Wild Rift 出裝符文比較</h1>
+  <span class="patch" id="patch"></span>
+  <span class="src">資料來源：wr-meta.com（本地快照）</span>
+</header>
+<main>
+  <section id="picker">
+    <input type="text" id="search" placeholder="搜尋英雄（中英皆可輸入英文名）…" autocomplete="off">
+    <div class="champ-grid" id="champGrid"></div>
+  </section>
+  <section id="champView" style="display:none"></section>
+</main>
+<div class="tooltip" id="tooltip" style="display:none"></div>
+<script src="data.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
