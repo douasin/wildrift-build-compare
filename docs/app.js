@@ -240,15 +240,27 @@
         }))));
 
     // ---- build list ----
-    panel.append(el('h4', null, '出裝順序（由上到下購買）'));
+    const recommended = [...new Set([...(c.builds['Example build'] || []), ...(c.builds['Core'] || []),
+      ...(c.builds['Situational'] || []), ...(c.builds['Boots'] || [])])]
+      .filter(nm => D.items[nm] && D.items[nm].gold);
+    const allItems = Object.values(D.items).filter(it => it.gold >= 700)
+      .sort((a, b) => a.name.localeCompare(b.name)).map(it => it.name);
+
+    panel.append(el('h4', null, '出裝順序（由上到下購買；點物品可直接更換）'));
     const list = el('div', { class: 'build-list' });
     const times = E.itemCompletionTimes(lo.build, state.gpm, D.items);
     lo.build.forEach((nm, i) => {
       const it = D.items[nm] || { gold: 0 };
       const tt = times[i];
+      // 點目前物品 -> 開啟選單原位替換
+      const swapBtn = itemDropdown(recommended, allItems,
+        pick => { lo.build[i] = pick; refresh(); },
+        [el('img', { src: it.icon || '' }),
+         el('span', { class: 'nm' }, nm),
+         el('span', { class: 'dd-caret' }, '▾')],
+        'dd-inline');
       list.append(el('div', { class: 'build-item' },
-        el('img', { src: it.icon || '' }),
-        el('span', { class: 'nm' }, nm),
+        swapBtn,
         el('span', { class: 'gold' }, (it.gold || 0) + 'g'),
         el('span', { class: 'cum' }, tt ? `約 ${tt.time.toFixed(1)} 分完成` : ''),
         el('button', { onclick: () => { if (i > 0) { [lo.build[i - 1], lo.build[i]] = [lo.build[i], lo.build[i - 1]]; refresh(); } } }, '↑'),
@@ -258,24 +270,9 @@
     });
     panel.append(list);
 
-    // add item
-    const sel = el('select', null);
-    sel.append(el('option', { value: '' }, '＋ 加入物品…'));
-    const recommended = new Set([...(c.builds['Example build'] || []), ...(c.builds['Core'] || []),
-      ...(c.builds['Situational'] || []), ...(c.builds['Boots'] || [])]);
-    const recGroup = el('optgroup', { label: '此英雄推薦/情境物品' });
-    for (const nm of recommended) {
-      if (D.items[nm] && D.items[nm].gold) recGroup.append(el('option', { value: nm }, `${nm}（${D.items[nm].gold}g）`));
-    }
-    sel.append(recGroup);
-    const allGroup = el('optgroup', { label: '全部物品' });
-    Object.values(D.items).filter(it => it.gold >= 700).sort((a, b) => a.name.localeCompare(b.name))
-      .forEach(it => allGroup.append(el('option', { value: it.name }, `${it.name}（${it.gold}g）`)));
-    sel.append(allGroup);
-    sel.addEventListener('change', () => {
-      if (sel.value) { lo.build.push(sel.value); refresh(); }
-    });
-    panel.append(el('div', { style: 'margin-top:8px' }, sel));
+    // add item (custom dropdown with icons + search)
+    panel.append(el('div', { style: 'margin-top:8px' },
+      itemDropdown(recommended, allItems, nm => { lo.build.push(nm); refresh(); })));
 
     // ---- runes ----
     panel.append(el('h4', null, '符文（第 1 格為基石）'));
@@ -387,6 +384,58 @@
       const wasHidden = menu.hidden;
       document.querySelectorAll('.dd-menu').forEach(m => m.hidden = true);
       menu.hidden = !wasHidden;
+    });
+    wrap.append(btn, menu);
+    return wrap;
+  }
+
+  // 自訂物品下拉（含縮圖＋搜尋）；btnChildren 可自訂按鈕外觀（原位替換用）
+  function itemDropdown(recommended, allItems, onPick, btnChildren, extraClass) {
+    const wrap = el('div', { class: 'dd' + (extraClass ? ' ' + extraClass : '') });
+    const btn = el('button', { class: 'dd-btn', type: 'button' },
+      ...(btnChildren || [
+        el('span', { class: 'dd-label' }, '＋ 加入物品…'),
+        el('span', { class: 'dd-caret' }, '▾'),
+      ]));
+    const menu = el('div', { class: 'dd-menu', hidden: '' });
+    menu.addEventListener('click', ev => ev.stopPropagation());
+
+    const search = el('input', {
+      class: 'dd-search', type: 'text', placeholder: '搜尋物品…', autocomplete: 'off',
+    });
+    menu.append(el('div', { class: 'dd-search-box' }, search));
+    const listBox = el('div', null);
+    menu.append(listBox);
+
+    const opt = nm => {
+      const it = D.items[nm];
+      return el('div', { class: 'dd-opt', onclick: () => onPick(nm) },
+        it && it.icon ? el('img', { class: 'sq', src: it.icon }) : el('span', { class: 'dd-noicon' }),
+        el('span', null, nm),
+        el('span', { class: 'dd-dmg' }, (it && it.gold ? it.gold + 'g' : '')));
+    };
+
+    const renderList = () => {
+      listBox.innerHTML = '';
+      const q = search.value.trim().toLowerCase();
+      const match = nm => !q || nm.toLowerCase().includes(q);
+      const rec = recommended.filter(match);
+      if (rec.length) {
+        listBox.append(el('div', { class: 'dd-group' }, '此英雄推薦/情境物品'));
+        rec.forEach(nm => listBox.append(opt(nm)));
+      }
+      listBox.append(el('div', { class: 'dd-group' }, '全部物品'));
+      allItems.filter(match).forEach(nm => listBox.append(opt(nm)));
+    };
+    search.addEventListener('input', renderList);
+    renderList();
+
+    btn.addEventListener('click', ev => {
+      ev.stopPropagation();
+      const wasHidden = menu.hidden;
+      document.querySelectorAll('.dd-menu').forEach(m => { m.hidden = true; });
+      menu.hidden = !wasHidden;
+      if (!menu.hidden) search.focus();
     });
     wrap.append(btn, menu);
     return wrap;

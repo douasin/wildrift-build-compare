@@ -145,6 +145,18 @@ label.inline { display: inline-flex; align-items: center; gap: 6px; margin: 3px 
 .dd-opt.sel { color: var(--gold); }
 .dd-opt img, .dd-noicon { width: 22px; height: 22px; border-radius: 50%; flex: none; display: inline-block; }
 .dd-dmg { margin-left: auto; font-size: 11px; color: var(--fg-dim); }
+.dd-opt img.sq { border-radius: 6px; }
+/* 出裝列內的原位替換下拉：按鈕外觀融入列 */
+.dd-inline .dd-btn { background: none; border: none; padding: 0; gap: 8px; }
+.dd-inline .dd-btn:hover .nm { color: var(--accent); text-decoration: underline; }
+.dd-inline .dd-btn .nm { flex: none; }
+.dd-inline .dd-caret { font-size: 10px; opacity: .6; }
+.dd-inline .dd-menu { min-width: 340px; right: auto; }
+.dd-search-box { position: sticky; top: 0; background: var(--bg2); padding: 8px; border-bottom: 1px solid var(--line); }
+.dd-search {
+  width: 100%; background: var(--bg3); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 6px; padding: 6px 9px; font-size: 13px;
+}
 
 .combo-grid { display: flex; flex-wrap: wrap; gap: 10px; }
 .combo-cell {
